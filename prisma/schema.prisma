@@ -5,8 +5,8 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-    provider = "prisma-client-js"
-    output   =  "../lib/generated/prisma"
+    provider        = "prisma-client-js"
+    output          = "../lib/generated/prisma"
     previewFeatures = ["driverAdapters"]
 }
 
@@ -16,18 +16,73 @@ datasource db {
 }
 
 model Product {
-    id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
     name        String
-    slug        String      @unique(map: "slug_idx")
+    slug        String   @unique(map: "slug_idx")
     category    String
     description String
     images      String[]
-    price       Decimal     @default(0) @db.Decimal(12,2)
+    price       Decimal  @default(0) @db.Decimal(12, 2)
     brand       String
-    rating      Decimal     @default(0) @db.Decimal(5,4)
-    numReviews  Int         @default(0)
+    rating      Decimal  @default(0) @db.Decimal(5, 4)
+    numReviews  Int      @default(0)
     stock       Int
     isFeatured  Boolean
     banner      String?
-    createdAt   DateTime    @default(now()) @db.Timestamp(6)
+    createdAt   DateTime @default(now()) @db.Timestamp(6)
+}
+
+model User {
+    id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+    name          String?   @default("NO_NAME")
+    email         String    @unique(map: "email_idx")
+    emailVerified DateTime?
+    image         String?
+    password      String
+    role          String    @default("user")
+    address       Json?
+    paymentMethod String?
+    createdAt     DateTime  @default(now()) @db.Timestamp(6)
+    updatedAt     DateTime  @updatedAt
+    account       Account[]
+    session       Session[]
+}
+
+model Account {
+    userId            String  @db.Uuid
+    type              String
+    provider          String
+    providerAccountId String
+    refresh_token     String?
+    access_token      String?
+    expires_at        Int?
+    token_type        String?
+    scope             String?
+    id_token          String?
+    session_state     String?
+
+    createdAt DateTime @default(now()) @db.Timestamp(6)
+    updatedAt DateTime @updatedAt
+
+    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@id([provider, providerAccountId])
+}
+
+model Session {
+    sessionToken String   @id
+    userId       String   @db.Uuid
+    expires      DateTime
+    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    createdAt DateTime @default(now()) @db.Timestamp()
+    updatedAt DateTime @updatedAt
+}
+
+model VerificationToken {
+    identifier String
+    token      String
+    expires    DateTime
+
+    @@id([identifier, token])
 }
